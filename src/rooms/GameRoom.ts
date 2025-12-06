@@ -3,6 +3,8 @@ import { GameState, Player, Question } from "./schema/GameState";
 
 export class GameRoom extends Room<GameState> {
   maxClients = 6;
+  private questionSequence: Question[] = [];
+  private questionIndex = 0;
   // Round 1: ordering questions
   private orderQuestionBank = [
     {
@@ -168,7 +170,7 @@ export class GameRoom extends Room<GameState> {
     this.setState(new GameState());
 
     // Seed first question placeholder and round configuration
-    this.state.currentQuestion = this.getRandomOrderQuestion();
+    this.state.currentQuestion = this.questionSequence[this.questionIndex];
     this.state.roundPoints.clear();
     this.state.roundTypes.clear();
     this.state.totalPossiblePoints = 0;
@@ -207,8 +209,8 @@ export class GameRoom extends Room<GameState> {
       this.state.currentRound = 1;
       this.configureRounds();
 
-      // Pick a fresh random question for round 1
-      this.startOrderRound();
+      // Pick a fresh question for round 1
+      this.loadQuestion(this.questionSequence[this.questionIndex]);
       this.state.gamePhase = "playing";
       this.state.questionStartTime = Date.now();
       this.state.players.forEach((player) => {
@@ -280,9 +282,9 @@ export class GameRoom extends Room<GameState> {
 
         // Wait 5 seconds before moving to next round so players can see the correct answer
         this.clock.setTimeout(() => {
-          if (this.state.currentRound < this.state.totalRounds) {
-            this.state.currentRound += 1;
-            this.startRoundByType(this.state.roundTypes[this.state.currentRound - 1]);
+          if (this.questionIndex + 1 < this.questionSequence.length) {
+            this.questionIndex += 1;
+            this.loadQuestion(this.questionSequence[this.questionIndex]);
           } else {
             this.state.gamePhase = "results";
             // No toast message - just move to results screen
@@ -339,9 +341,7 @@ export class GameRoom extends Room<GameState> {
     return shuffled;
   }
 
-  private getRandomOrderQuestion(): Question {
-    const source =
-      this.orderQuestionBank[Math.floor(Math.random() * this.orderQuestionBank.length)];
+  private createOrderQuestion(source: { text: string; correctOrder: string[] }): Question {
     const question = new Question();
     question.text = source.text;
     question.type = "order";
@@ -352,9 +352,7 @@ export class GameRoom extends Room<GameState> {
     return question;
   }
 
-  private getRandomLogoQuestion(): Question {
-    const source =
-      this.logoQuestionBank[Math.floor(Math.random() * this.logoQuestionBank.length)];
+  private createLogoQuestion(source: { text: string; image: string; correctAnswer: string; options: string[] }): Question {
     const question = new Question();
     question.text = source.text;
     question.type = "logo";
@@ -366,58 +364,41 @@ export class GameRoom extends Room<GameState> {
     return question;
   }
 
-  private startLogoRound() {
-    this.state.currentQuestion = this.getRandomLogoQuestion();
-    this.state.questionStartTime = Date.now();
-
-    this.state.players.forEach((player) => {
-      player.answers.clear();
-      player.hasSubmitted = false;
-      player.selectedOption = "";
-      const shuffled = this.shuffleArray([...this.state.currentQuestion.answers]);
-      shuffled.forEach((answer) => player.answers.push(answer));
+  private createAudioQuestion(source: { text: string; audio: string; correctAnswer: string; options: string[] }): Question {
+    const question = new Question();
+    question.text = source.text;
+    question.type = "audio";
+    question.audio = source.audio;
+    question.correctAnswer = source.correctAnswer;
+    source.options.forEach((option: string) => {
+      question.answers.push(option);
     });
-
-    this.broadcast("message", { text: "Runda 2: dobierz klub do herbu!" });
+    return question;
   }
 
-  private startAudioRound() {
-    this.state.currentQuestion = this.getRandomAudioQuestion();
-    this.state.questionStartTime = Date.now();
-
-    this.state.players.forEach((player) => {
-      player.answers.clear();
-      player.hasSubmitted = false;
-      player.selectedOption = "";
-      const shuffled = this.shuffleArray([...this.state.currentQuestion.answers]);
-      shuffled.forEach((answer) => player.answers.push(answer));
-    });
-
-    this.broadcast("message", { text: "Runda 3: jaka to melodia?" });
+  private getFallbackQuestion(type: string): Question {
+    const fallback = new Question();
+    fallback.text = "Brak pytań";
+    fallback.type = type;
+    fallback.correctAnswer = "Brak";
+    fallback.answers.push("Brak opcji");
+    return fallback;
   }
 
-  private startOrderRound() {
-    this.state.currentQuestion = this.getRandomOrderQuestion();
+  private loadQuestion(question: Question | undefined) {
+    const q = question ? this.cloneQuestion(question) : this.getFallbackQuestion("order");
+    this.state.currentQuestion = q;
     this.state.questionStartTime = Date.now();
+    this.state.currentRound = this.questionIndex + 1;
 
     this.state.players.forEach((player) => {
       player.answers.clear();
       player.hasSubmitted = false;
       player.lastRoundScore = 0;
       player.selectedOption = "";
-      const shuffled = this.shuffleArray([...this.state.currentQuestion.answers]);
+      const shuffled = this.shuffleArray([...q.answers]);
       shuffled.forEach((answer) => player.answers.push(answer));
     });
-  }
-
-  private startRoundByType(type: string) {
-    if (type === "order") {
-      this.startOrderRound();
-    } else if (type === "logo") {
-      this.startLogoRound();
-    } else if (type === "audio") {
-      this.startAudioRound();
-    }
   }
 
   private cloneQuestion(source: Question): Question {
@@ -430,29 +411,6 @@ export class GameRoom extends Room<GameState> {
     source.answers.forEach((a) => q.answers.push(a));
     source.correctOrder.forEach((a) => q.correctOrder.push(a));
     return q;
-  }
-
-  private getRandomAudioQuestion(): Question {
-    if (this.audioQuestionBank.length === 0) {
-      const fallback = new Question();
-      fallback.text = "Dodaj pytania audio do audioQuestionBank.";
-      fallback.type = "audio";
-      fallback.audio = "";
-      fallback.correctAnswer = "Brak pytania audio";
-      fallback.answers.push("Brak opcji");
-      return fallback;
-    }
-    const source =
-      this.audioQuestionBank[Math.floor(Math.random() * this.audioQuestionBank.length)];
-    const question = new Question();
-    question.text = source.text;
-    question.type = "audio";
-    question.audio = source.audio;
-    question.correctAnswer = source.correctAnswer;
-    source.options.forEach((option: string) => {
-      question.answers.push(option);
-    });
-    return question;
   }
 
   private sendOrderResult(client: Client, player: Player) {
@@ -493,24 +451,21 @@ export class GameRoom extends Room<GameState> {
     this.state.roundTypes.clear();
     this.state.roundPoints.clear();
 
-    // Round 1: ordering (4 points)
-    this.state.roundTypes.push("order");
-    this.state.roundPoints.push(4);
+    // Build linear sequence with all questions, shuffled across all types
+    const allQuestions: Question[] = [
+      ...this.orderQuestionBank.map((q) => this.createOrderQuestion(q)),
+      ...this.logoQuestionBank.map((q) => this.createLogoQuestion(q)),
+      ...this.audioQuestionBank.map((q) => this.createAudioQuestion(q)),
+    ];
+    this.questionSequence = this.shuffleArray(allQuestions);
+    this.questionIndex = 0;
 
-    // Round 2: logo (1 point)
-    this.state.roundTypes.push("logo");
-    this.state.roundPoints.push(1);
-
-    // Round 3: audio (1 point) only if questions provided
-    if (this.audioQuestionBank.length > 0) {
-      this.state.roundTypes.push("audio");
-      this.state.roundPoints.push(1);
-    }
+    this.state.roundTypes.push(...this.questionSequence.map((q) => q.type));
+    this.state.roundPoints.push(
+      ...this.questionSequence.map((q) => (q.type === "order" ? 4 : 1))
+    );
 
     this.state.totalRounds = this.state.roundTypes.length;
-    this.state.totalPossiblePoints = this.state.roundPoints.reduce(
-      (sum, value) => sum + value,
-      0
-    );
+    this.state.totalPossiblePoints = this.state.roundPoints.reduce((sum, v) => sum + v, 0);
   }
 }

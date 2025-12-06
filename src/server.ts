@@ -17,6 +17,8 @@ app.use(express.static("public"));
 app.use("/img", express.static("img"));
 // Serve music snippets
 app.use("/music", express.static("music"));
+// Serve UI sounds
+app.use("/ui-sound", express.static("ui-sound"));
 
 const server = createServer(app);
 const gameServer = new Server({

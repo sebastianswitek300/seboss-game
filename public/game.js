@@ -4,6 +4,7 @@ let mySessionId;
 let myNickname;
 let sortable;
 let audioPlayer = null;
+let lastQuestionKey = null;
 
 // Get server URL (match current host/port/protocol)
 const host = window.location.hostname;
@@ -136,6 +137,7 @@ function setupRoomListeners() {
             lobbyScreen.classList.remove('hidden');
             gameScreen.classList.add('hidden');
             resultsScreen.classList.add('hidden');
+            lastQuestionKey = null;
 
             // Show start button if you're the host
             if (state.hostId === mySessionId) {
@@ -151,11 +153,16 @@ function setupRoomListeners() {
             resultsScreen.classList.add('hidden');
 
             // Display question
-            displayQuestion(state);
+            const key = `${state.currentQuestion.text}|${state.currentQuestion.type}`;
+            if (key !== lastQuestionKey) {
+                lastQuestionKey = key;
+                displayQuestion(state);
+            }
         } else if (state.gamePhase === 'results') {
             lobbyScreen.classList.add('hidden');
             gameScreen.classList.add('hidden');
             resultsScreen.classList.remove('hidden');
+            lastQuestionKey = null;
 
             // Display results
             displayResults(state);
