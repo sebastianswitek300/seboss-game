@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm i:*)",
+      "Bash(sudo npm:*)",
+      "WebSearch",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(claude mcp add playwright npx '@playwright/mcp@latest')",
+      "Bash(npm run test:headed:*)",
+      "Bash(npx playwright install)",
+      "Bash(npx playwright test:*)",
+      "Bash(curl:*)",
+      "Bash(npm test:*)",
+      "Bash(open http://localhost:2567)",
+      "Bash(pkill:*)",
+      "Bash(cat:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
