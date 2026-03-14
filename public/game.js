@@ -33,6 +33,7 @@ const joinBtn = document.getElementById('joinBtn');
 const startBtn = document.getElementById('startBtn');
 const submitBtn = document.getElementById('submitBtn');
 
+const nextQuestionBtn = document.getElementById('nextQuestionBtn');
 const playersList = document.getElementById('playersList');
 const playerCount = document.getElementById('playerCount');
 const waitingMessage = document.getElementById('waitingMessage');
@@ -88,6 +89,17 @@ joinBtn.addEventListener('click', async () => {
 // Start game (only host)
 startBtn.addEventListener('click', () => {
     room.send("startGame");
+});
+
+// Next question (only host) — two-step: reveal answers, then advance
+let resultsShown = false;
+nextQuestionBtn.addEventListener('click', () => {
+    playTap();
+    room.send("nextQuestion");
+    if (!resultsShown) {
+        resultsShown = true;
+        nextQuestionBtn.textContent = 'Nastepne pytanie';
+    }
 });
 
 // Submit answers
@@ -379,6 +391,15 @@ function displayQuestion(state) {
     submitBtn.disabled = false;
     submitBtn.classList.remove('disabled');
     submitBtn.textContent = 'Zatwierdź odpowiedź';
+
+    // Show "next question" button for host only — reset to first step
+    resultsShown = false;
+    if (state.hostId === mySessionId) {
+        nextQuestionBtn.classList.remove('hidden');
+        nextQuestionBtn.textContent = 'Pokaz odpowiedzi';
+    } else {
+        nextQuestionBtn.classList.add('hidden');
+    }
 }
 
 // Display results

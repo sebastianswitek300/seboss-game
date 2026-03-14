@@ -5,104 +5,175 @@ export class GameRoom extends Room<GameState> {
   maxClients = 6;
   private questionSequence: Question[] = [];
   private questionIndex = 0;
-  // Round 1: ordering questions
+  private questionTimer: any = null;
+  private resultsRevealed = false;
+  // Round 1: ordering questions — conspiracy & UFO themed
   private orderQuestionBank = [
     {
-      text: "Co można znaleźć w lesie?",
-      correctOrder: ["Łosia", "Grzyby", "Jagody", "Zgubiony telefon"],
-    },
-    {
-      text: "Co robi mąż po powrocie z pracy?",
-      correctOrder: ["Piwko", "Siada na kanapie", "Włącza telewizor", "Śpi"],
-    },
-    {
-      text: "Co robi się, kiedy człowiek jest pijany?",
+      text: "Najpopularniejsze teorie spiskowe wg liczby wyznawców",
       correctOrder: [
-        "Nie trafia w klamkę",
-        "Wymiotuje",
-        "Zasypia",
-        "Mówi, że kocha wszystkich",
+        "Lądowanie na Księżycu było sfałszowane",
+        "Ziemia jest płaska",
+        "Illuminati rządzą światem",
+        "Reptilianie wśród nas",
       ],
     },
     {
-      text: "Co jest żółte?",
-      correctOrder: ["Żółte karteczki", "Banan", "Słońce", "Ser"],
+      text: "Co rząd ukrywa w Strefie 51?",
+      correctOrder: [
+        "Rozbity statek UFO",
+        "Ciała kosmitów",
+        "Broń przyszłości",
+        "Przepis na Coca-Colę",
+      ],
     },
     {
-      text: "Co można otworzyć?",
-      correctOrder: ["Parasol", "Drzwi", "Okno", "Butelkę"],
+      text: "Co się dzieje podczas porwania przez kosmitów?",
+      correctOrder: [
+        "Jasne światło z nieba",
+        "Lewitacja do statku",
+        "Badania na stole operacyjnym",
+        "Wymazanie pamięci",
+      ],
     },
     {
-      text: "Co jest w kuchni?",
-      correctOrder: ["Chlebak", "Czajnik", "Lodówka", "Dżem"],
+      text: "Jak rozpoznać reptilianina?",
+      correctOrder: [
+        "Pionowe źrenice",
+        "Zimna skóra dłoni",
+        "Nigdy nie mruga",
+        "Nie je czosnku",
+      ],
     },
     {
-      text: "Co można zjeść na śniadanie?",
-      correctOrder: ["Tosty", "Jajecznicę", "Kanapkę", "Zupę"],
+      text: "Etapy wtajemniczenia w Illuminati",
+      correctOrder: [
+        "Zaproszenie na tajne spotkanie",
+        "Przysięga milczenia",
+        "Tatuaż z okiem opatrzności",
+        "Kontrola jednego banku centralnego",
+      ],
     },
     {
-      text: "Jakie znasz zwierzę domowe?",
-      correctOrder: ["Kot", "Pies", "Chomik", "Królik"],
+      text: "Dowody płaskoziemców na to, że Ziemia jest płaska",
+      correctOrder: [
+        "Horyzont wygląda na płaski",
+        "Woda nie zakrzywia się",
+        "Samoloty nie latają do góry nogami",
+        "Pingwiny pilnują krawędzi",
+      ],
     },
     {
-      text: "Co można robić w toalecie?",
-      correctOrder: ["Żyć", "Czytać", "Scrollować telefon", "Myśleć"],
+      text: "Co naprawdę jest na ciemnej stronie Księżyca?",
+      correctOrder: [
+        "Baza kosmitów",
+        "Opuszczone miasto",
+        "Nadajnik kontroli umysłów",
+        "Parking IKEA",
+      ],
+    },
+    {
+      text: "Teorie o Trójkącie Bermudzkim — co tam jest?",
+      correctOrder: [
+        "Portal do innego wymiaru",
+        "Podwodna baza UFO",
+        "Zatopiona Atlantyda",
+        "Gigantyczny magnes",
+      ],
+    },
+    {
+      text: "Jak Illuminati kontrolują ludzkość?",
+      correctOrder: [
+        "Media i telewizja",
+        "System edukacji",
+        "Fluorek w wodzie",
+        "Ukryte przekazy w muzyce pop",
+      ],
     },
   ];
 
-  // Round 2: logo -> club name questions
+  // Round 2: famous movie scene -> title questions
   private logoQuestionBank = [
     {
-      text: "Dopasuj klub do herbu",
-      image: "/img/atalanta.png",
-      correctAnswer: "Atalanta Bergamo",
-      options: ["Atalanta Bergamo", "Inter Mediolan", "Lazio Rzym", "Empoli FC"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/5-element.jpg",
+      correctAnswer: "Piaty Element",
+      options: [
+        "Piaty Element",
+        "Blade Runner",
+        "Total Recall",
+        "Gattaca",
+      ],
     },
     {
-      text: "Dopasuj klub do herbu",
-      image: "/img/tottenham.png",
-      correctAnswer: "Tottenham Hotspur",
-      options: ["Tottenham Hotspur", "Swansea City", "Newcastle United", "Leeds United"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/dzien-niepodleglosci.jpg",
+      correctAnswer: "Dzien Niepodleglosci",
+      options: [
+        "Dzien Niepodleglosci",
+        "Wojna swiatow",
+        "Marsjanin",
+        "Bitwa o Los Angeles",
+      ],
     },
     {
-      text: "Dopasuj klub do herbu",
-      image: "/img/as-monaco.png",
-      correctAnswer: "AS Monaco",
-      options: ["AS Monaco", "Stade Reims", "Stade Rennais", "Royal Antwerp"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/faceci-w-czerni.webp",
+      correctAnswer: "Faceci w czerni",
+      options: [
+        "Faceci w czerni",
+        "Dzien Niepodleglosci",
+        "Matrix",
+        "Piaty Element",
+      ],
     },
     {
-      text: "Dopasuj klub do herbu",
-      image: "/img/real-madryt.png",
-      correctAnswer: "Real Madryt",
-      options: ["Real Madryt", "Real Valladolid", "Real Betis", "Real Sociedad"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/marsjanie-atakuja.jpg",
+      correctAnswer: "Marsjanie atakuja!",
+      options: [
+        "Marsjanie atakuja!",
+        "Inwazja porywaczy cial",
+        "Plan 9 z kosmosu",
+        "Faceci w czerni",
+      ],
     },
     {
-      text: "Dopasuj markę modową do logo",
-      image: "/img/c&a.png",
-      correctAnswer: "C&A",
-      options: ["C&A", "H&M", "Calvin Klein", "Reserved"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/obcy.png",
+      correctAnswer: "Obcy — 8. pasazer Nostromo",
+      options: [
+        "Obcy — 8. pasazer Nostromo",
+        "Predator",
+        "Cos (The Thing)",
+        "Zycie (Life)",
+      ],
     },
     {
-      text: "Dopasuj markę modową do logo",
-      image: "/img/gucci.png",
-      correctAnswer: "Gucci",
-      options: ["Gucci", "Guess", "Fendi", "Giorgio Armani"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/star-wars.jpeg",
+      correctAnswer: "Gwiezdne wojny",
+      options: [
+        "Gwiezdne wojny",
+        "Star Trek",
+        "Battlestar Galactica",
+        "Dune",
+      ],
     },
     {
-      text: "Dopasuj markę modową do logo",
-      image: "/img/michael-kors.png",
-      correctAnswer: "Michael Kors",
-      options: ["Michael Kors", "Calvin Klein", "DKNY", "Tommy Hilfiger"],
-    },
-    {
-      text: "Dopasuj markę modową do logo",
-      image: "/img/versace.png",
-      correctAnswer: "Versace",
-      options: ["Versace", "Hermès", "Balmain", "Roberto Cavalli"],
+      text: "Rozpoznaj film po slynnej scenie",
+      image: "/img/znaki.png",
+      correctAnswer: "Znaki (Signs)",
+      options: [
+        "Znaki (Signs)",
+        "Szosty zmysl",
+        "Bliskie spotkania trzeciego stopnia",
+        "Pojawienie sie (The Happening)",
+      ],
     },
   ];
 
-  // Round 3: audio -> song title questions (fill audio paths/options when ready)
+  // Round 3: audio -> sci-fi/conspiracy theme songs
   private audioQuestionBank: Array<{
     text: string;
     audio: string;
@@ -110,58 +181,58 @@ export class GameRoom extends Room<GameState> {
     options: string[];
   }> = [
     {
-      text: "Jaka to melodia?",
-      audio: "/music/Aerosmith - Cryin.MP3",
-      correctAnswer: "Aerosmith - Cryin'",
+      text: "Rozpoznaj motyw muzyczny",
+      audio: "/music/x-files.mp3",
+      correctAnswer: "Z Archiwum X (The X-Files)",
       options: [
-        "Aerosmith - Cryin'",
-        "Guns N' Roses - November Rain",
-        "Bon Jovi - Always",
-        "Def Leppard - Hysteria",
+        "Z Archiwum X (The X-Files)",
+        "Stranger Things",
+        "Twin Peaks",
+        "Nie do wiary (TVN)",
       ],
     },
     {
-      text: "Jaka to melodia?",
-      audio: "/music/Benny Benassi Bross - Every Single Day.MP3",
-      correctAnswer: "Benny Benassi Bros - Every Single Day",
+      text: "Rozpoznaj motyw muzyczny",
+      audio: "/music/interstellar.MP3",
+      correctAnswer: "Interstellar (Hans Zimmer)",
       options: [
-        "Benny Benassi Bros - Every Single Day",
-        "ATB - 9 PM (Till I Come)",
-        "Gigi D'Agostino - The Riddle",
-        "Ian Van Dahl - Castles in the Sky",
+        "Interstellar (Hans Zimmer)",
+        "Incepcja (Hans Zimmer)",
+        "2001: Odyseja kosmiczna",
+        "Grawitacja",
       ],
     },
     {
-      text: "Jaka to melodia?",
-      audio: "/music/Christina Aguilera - Genie In A Bottle.MP3",
-      correctAnswer: "Christina Aguilera - Genie In A Bottle",
+      text: "Rozpoznaj motyw muzyczny",
+      audio: "/music/Men in black.MP3",
+      correctAnswer: "Men in Black (Will Smith)",
       options: [
-        "Christina Aguilera - Genie In A Bottle",
-        "Britney Spears - Baby One More Time",
-        "Jessica Simpson - I Wanna Love You Forever",
-        "Mandy Moore - Candy",
+        "Men in Black (Will Smith)",
+        "Ghostbusters (Ray Parker Jr.)",
+        "Wild Wild West (Will Smith)",
+        "Bad Boys (Inner Circle)",
       ],
     },
     {
-      text: "Jaka to melodia?",
-      audio: "/music/Da Hool - meet her at the Loveparade.MP3",
-      correctAnswer: "Da Hool - Meet Her at the Love Parade",
+      text: "Rozpoznaj motyw muzyczny",
+      audio: "/music/odyseja-kosmiczna.MP3",
+      correctAnswer: "2001: Odyseja kosmiczna",
       options: [
-        "Da Hool - Meet Her at the Love Parade",
-        "Darude - Sandstorm",
-        "The Chemical Brothers - Hey Boy Hey Girl",
-        "Zombie Nation - Kernkraft 400",
+        "2001: Odyseja kosmiczna",
+        "Interstellar (Hans Zimmer)",
+        "Star Trek",
+        "Gwiezdne wojny",
       ],
     },
     {
-      text: "Jaka to melodia?",
-      audio: "/music/Oasis - Wonderwall .MP3",
-      correctAnswer: "Oasis - Wonderwall",
+      text: "Rozpoznaj motyw muzyczny",
+      audio: "/music/Nie do Wiary.mp3",
+      correctAnswer: "Nie do wiary (TVN)",
       options: [
-        "Oasis - Wonderwall",
-        "Blur - Song 2",
-        "The Verve - Bitter Sweet Symphony",
-        "Radiohead - Creep",
+        "Nie do wiary (TVN)",
+        "Z Archiwum X (The X-Files)",
+        "Galileo (ProSieben)",
+        "Wędrowycz — Na tropie zjawisk nadprzyrodzonych",
       ],
     },
   ];
@@ -226,7 +297,8 @@ export class GameRoom extends Room<GameState> {
       this.broadcast("message", { text: "Gra rozpoczęta! Runda 1: ustaw kolejność odpowiedzi!" });
     });
 
-    // Handle answer submission
+    // Handle answer submission — score is calculated but results are NOT sent yet.
+    // Results are revealed only when the 20s question timer fires.
     this.onMessage("submitAnswers", (client, message) => {
       if (this.state.gamePhase !== "playing") {
         return;
@@ -234,6 +306,7 @@ export class GameRoom extends Room<GameState> {
 
       const player = this.state.players.get(client.sessionId);
       if (!player) return;
+      if (player.hasSubmitted) return; // prevent double submit
 
       if (this.state.currentQuestion.type === "order") {
         player.answers.clear();
@@ -248,7 +321,7 @@ export class GameRoom extends Room<GameState> {
         }
         player.lastRoundScore = score;
         player.score += score;
-        this.sendOrderResult(client, player);
+        // Don't send result yet — wait for 20s timer
       } else if (this.state.currentQuestion.type === "logo") {
         const selected = message.selected as string;
         player.selectedOption = selected;
@@ -256,7 +329,6 @@ export class GameRoom extends Room<GameState> {
         const gained = selected === this.state.currentQuestion.correctAnswer ? 1 : 0;
         player.lastRoundScore = gained;
         player.score += gained;
-        // Don't send result immediately - wait for all players
       } else if (this.state.currentQuestion.type === "audio") {
         const selected = message.selected as string;
         player.selectedOption = selected;
@@ -264,33 +336,8 @@ export class GameRoom extends Room<GameState> {
         const gained = selected === this.state.currentQuestion.correctAnswer ? 1 : 0;
         player.lastRoundScore = gained;
         player.score += gained;
-        // Don't send result immediately - wait for all players
       }
-
-      // Check if all players submitted
-      const allSubmitted = Array.from(this.state.players.values()).every(p => p.hasSubmitted);
-      if (allSubmitted) {
-        this.state.completedQuestions.push(this.cloneQuestion(this.state.currentQuestion));
-
-        // Send results to all players now that everyone has submitted
-        this.state.players.forEach((p, sessionId) => {
-          const client = Array.from(this.clients).find(c => c.sessionId === sessionId);
-          if (client && (this.state.currentQuestion.type === "logo" || this.state.currentQuestion.type === "audio")) {
-            this.sendSingleChoiceResult(client, p.lastRoundScore, p.selectedOption);
-          }
-        });
-
-        // Wait 5 seconds before moving to next round so players can see the correct answer
-        this.clock.setTimeout(() => {
-          if (this.questionIndex + 1 < this.questionSequence.length) {
-            this.questionIndex += 1;
-            this.loadQuestion(this.questionSequence[this.questionIndex]);
-          } else {
-            this.state.gamePhase = "results";
-            // No toast message - just move to results screen
-          }
-        }, 5000);
-      }
+      // Results are revealed by the 20s timer in loadQuestion, not here.
     });
 
     // Host-controlled audio playback
@@ -300,6 +347,20 @@ export class GameRoom extends Room<GameState> {
         return;
       }
       this.broadcast("audioControl", { action: message.action });
+    });
+
+    // Host controls flow: first click reveals answers, second click advances
+    this.onMessage("nextQuestion", (client) => {
+      if (client.sessionId !== this.state.hostId) return;
+      if (this.state.gamePhase !== "playing") return;
+
+      if (!this.resultsRevealed) {
+        // First click: reveal correct answers
+        this.revealResults();
+      } else {
+        // Second click: advance to next question
+        this.advanceQuestion();
+      }
     });
   }
 
@@ -399,6 +460,34 @@ export class GameRoom extends Room<GameState> {
       const shuffled = this.shuffleArray([...q.answers]);
       shuffled.forEach((answer) => player.answers.push(answer));
     });
+
+    // No auto-advance timer — host controls when to move to next question
+  }
+
+  private revealResults() {
+    this.resultsRevealed = true;
+    this.state.completedQuestions.push(this.cloneQuestion(this.state.currentQuestion));
+
+    // Send results to ALL players
+    this.state.players.forEach((p, sessionId) => {
+      const client = Array.from(this.clients).find(c => c.sessionId === sessionId);
+      if (!client) return;
+      if (this.state.currentQuestion.type === "order") {
+        this.sendOrderResult(client, p);
+      } else {
+        this.sendSingleChoiceResult(client, p.lastRoundScore, p.selectedOption);
+      }
+    });
+  }
+
+  private advanceQuestion() {
+    this.resultsRevealed = false;
+    if (this.questionIndex + 1 < this.questionSequence.length) {
+      this.questionIndex += 1;
+      this.loadQuestion(this.questionSequence[this.questionIndex]);
+    } else {
+      this.state.gamePhase = "results";
+    }
   }
 
   private cloneQuestion(source: Question): Question {
